@@ -23,6 +23,7 @@ import qrcode
 import sys
 import sqlite3
 from btc_case import lcd_display
+from subprocess import Popen, PIPE
 
 sys.path.append('/home/pi/build/Python-Thermal-Printer')
 
@@ -45,7 +46,7 @@ def print_seed(seed):
 
 
 
-def print_keypair(pubkey, privkey, leftBorderText, curbtc, inputamt):
+def print_keypair(pubkey, privkey, leftBorderText, curbtc, inputamt, tx_hash):
 
 #open the printer itself
 	printer = Adafruit_Thermal("/dev/ttyAMA0", 19200, timeout=5)
@@ -205,6 +206,7 @@ def print_keypair(pubkey, privkey, leftBorderText, curbtc, inputamt):
 	printer.println("1USD=B"+str(usd))
 	printer.println("Input=$"+str(inputamt))
 	printer.println("Return=B"+str(returnamt))
+	printer.println("Transaction Hash: "+str(tx_hash))
 	printer.printImage(finalImg)
 	
 	#if(len(privkey) <= 51):
@@ -300,12 +302,19 @@ def genAndPrintKeys(curbtc, inputamt, numCopies, password, lcd):
 
 
 	leftMarkText = "Serial Number: "+snum
+
+	lcd_display(lcd, "Transferring", "Bitcoins!")
+	usd = 1.0/float(curbtc)
+	returnamt = usd*float(inputamt)
+	#electrum -w /home/pi/.electrum/wallets/default_wallet -f 0.0001 payto 1PPyJbKyMtKjiMPJcm4dYbRdy9BcW3i3j2 0.0030
+	transfer_cmd = ['electrum', '-w', '/home/pi/.electrum/wallets/default_wallet', '-f', '0.0001', 'payto', str(btckeys.pubkey), str(returnamt)]
+	tx_hash = Popen(transfer_cmd, stdout=PIPE).communicate()[0]
 	lcd_display(lcd, "Printing", "receipt")
 	#do the actual printing
 	for x in range(0, numCopies):
 
 		#piper.print_keypair(pubkey, privkey, leftBorderText)
-		print_keypair(btckeys.pubkey, privkey, leftMarkText, curbtc, inputamt)
+		print_keypair(btckeys.pubkey, privkey, leftMarkText, curbtc, inputamt, tx_hash)
 		
 		if numCopies > 1 and x < numCopies-1:
 			time.sleep(30)

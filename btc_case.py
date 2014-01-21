@@ -191,12 +191,8 @@ if __name__ == "__main__":
 			time.sleep(2)
 			
 			pubkey = Piper.genAndPrintKeys(btc, input, 1, "", lcd)
-			lcd_display(lcd, 'DOEN! ^_^', '\o/')
+			lcd_display(lcd, 'DOEN! ^_^', ' ')
 			print pubkey
-			#display lcd generating address
-			#run electrum and perform transfer
-			#display lcd transferring btc
-			#finish!
 			time.sleep(2)
 			d.resume()            
 			
